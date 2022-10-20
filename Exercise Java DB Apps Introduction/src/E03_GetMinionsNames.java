@@ -44,6 +44,6 @@ public class E03_GetMinionsNames {
         while (set.next()) {
             System.out.println(set.getString(1) + set.getString(2));
         }
-
+        connection.close();
     }
 }
