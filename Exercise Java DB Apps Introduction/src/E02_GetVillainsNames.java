@@ -22,9 +22,4 @@ public class E02_GetVillainsNames {
 
         connection.close();
     }
-
-
-    private static void addMinion() throws SQLException {
-
-    }
 }
