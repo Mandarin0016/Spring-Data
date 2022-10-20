@@ -38,5 +38,6 @@ public class E05_ChangeTownNames {
             System.out.printf("%d town names were affected.%n", townNames.size());
             System.out.println(townNames);
         }
+        connection.close();
     }
 }
