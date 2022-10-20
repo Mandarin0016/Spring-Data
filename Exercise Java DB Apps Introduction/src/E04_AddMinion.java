@@ -20,6 +20,7 @@ public class E04_AddMinion {
         addMinionToVillain(connection, minionInformation, villainName);
 
         System.out.printf("Successfully added %s to be minion of %s.%n", minionInformation[0], villainName);
+        connection.close();
     }
 
     private static void addMinionToVillain(Connection connection, String[] minionInformation, String villainName) throws SQLException {
