@@ -25,6 +25,122 @@ public class EntityManager<E> implements DBContext<E> {
         this.connection = connection;
     }
 
+    public void doCreate(Class<E> entityClass) throws SQLException {
+        String tableName = getTableName(entityClass);
+        String sqlFieldsWithTypesTable = getSQLFieldsWithTypesWithoutIdentity(entityClass);
+
+        String sql = String.format("""
+                CREATE TABLE `%s`
+                (
+                `id` int auto_increment primary key,
+                %s
+                );
+                """, tableName, sqlFieldsWithTypesTable);
+
+        PreparedStatement statement = connection.prepareStatement(sql);
+
+        statement.execute();
+    }
+
+    public void doAlter(Class<E> entityClass) throws SQLException {
+        String tableName = getTableName(entityClass);
+        String fieldWithTypes = getNewSQLFieldsWithTypesWithoutIdentity(entityClass);
+
+        String alterQuery = String.format("""
+                ALTER TABLE `%s`
+                %s;
+                """, tableName, fieldWithTypes);
+
+        PreparedStatement statement = connection.prepareStatement(alterQuery);
+
+        statement.execute();
+    }
+
+    public boolean doDelete(E entity) throws IllegalAccessException, SQLException {
+        String tableName = getTableName(entity.getClass());
+
+        Field idColumn = getIdColumn(entity.getClass());
+        idColumn.setAccessible(true);
+
+        Object idValue = idColumn.get(entity);
+
+        String query = String.format("""
+                DELETE FROM %s WHERE `id` = %s;
+                """, tableName, idValue);
+
+        PreparedStatement statement = connection.prepareStatement(query);
+
+        return statement.execute();
+    }
+
+    private String getNewSQLFieldsWithTypesWithoutIdentity(Class<E> entityClass) throws SQLException {
+        List<String> existingFields = getExistingTableColumnsNames(entityClass);
+        List<Field> newFields = new ArrayList<>();
+        Arrays.stream(entityClass.getDeclaredFields())
+                .filter(f -> !existingFields.contains(getDbAttributeName(f)))
+                .forEach(newFields::add);
+
+
+        return getAlterFormattingColumnDefinition(newFields);
+    }
+
+    private String getAlterFormattingColumnDefinition(List<Field> newFields) {
+        StringBuilder result = new StringBuilder();
+        List<String> newFieldTypes = new ArrayList<>();
+        for (Field newField : newFields) {
+            result.append("ADD ").append(getFieldNameWithType(newField));
+            newFieldTypes.add(result.toString());
+            result.setLength(0);
+        }
+        return String.join(",\n", newFieldTypes);
+    }
+
+    private List<String> getExistingTableColumnsNames(Class<E> entityClass) throws SQLException {
+        List<String> columnNames = new ArrayList<>();
+        PreparedStatement statement = connection.prepareStatement("""
+                SELECT `COLUMN_NAME`
+                FROM `INFORMATION_SCHEMA`.`COLUMNS`
+                WHERE `TABLE_SCHEMA` = ?
+                  AND `TABLE_NAME` = ?;
+                """);
+        statement.setString(1, connection.getCatalog());
+        statement.setString(2, getTableName(entityClass));
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            columnNames.add(resultSet.getString(1));
+        }
+        return columnNames;
+    }
+
+    private String getSQLFieldsWithTypesWithoutIdentity(Class<E> entityClass) {
+        List<String> SQLTypes = new ArrayList<>();
+
+        Field[] fields = Arrays.stream(entityClass.getDeclaredFields()).filter(f -> f.isAnnotationPresent(Column.class) && !f.isAnnotationPresent(Id.class)).toArray(Field[]::new);
+
+        for (Field field : fields) {
+            SQLTypes.add(getFieldNameWithType(field));
+        }
+
+        return String.join(",\n", SQLTypes);
+    }
+
+    private String getFieldNameWithType(Field field) {
+        StringBuilder result = new StringBuilder();
+        String type = getFieldDBType(field);
+        result.append("`").append(field.getAnnotation(Column.class).name()).append("`").append(" ").append(type);
+        return result.toString();
+    }
+
+    private String getFieldDBType(Field field) {
+        if (field.getType() == int.class || field.getType() == Integer.class || field.getType() == long.class || field.getType() == Long.class) {
+            return "INT";
+        } else if (field.getType() == LocalDate.class) {
+            return "DATE";
+        } else {
+            return "VARCHAR(100)";
+        }
+    }
+
     @Override
     public boolean persist(E entity) throws IllegalAccessException, SQLException {
         Field primaryKey = getIdColumn(entity.getClass());
@@ -68,7 +184,8 @@ public class EntityManager<E> implements DBContext<E> {
 
         for (Field field : fields) {
             field.setAccessible(true);
-            values.add(String.format("\"%s\"", field.get(entity).toString()));
+            Object value = field.get(entity);
+            values.add(String.format("\"%s\"", value != null ? value.toString() : null));
         }
         return String.join(",", values);
     }
@@ -199,7 +316,6 @@ public class EntityManager<E> implements DBContext<E> {
             return field.getAnnotation(Column.class).name();
         }
         return field.getName();
-
     }
 
     private Field getIdColumn(Class<?> entity) {
