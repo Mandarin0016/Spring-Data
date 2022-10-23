@@ -14,6 +14,8 @@ public class User {
     private Long id;
     @Column(name = "username")
     private String username;
+    @Column(name = "email")
+    private String email;
     @Column(name = "password")
     private String password;
     @Column(name = "age")
@@ -26,6 +28,14 @@ public class User {
 
     public User(String username, String password, int age, LocalDate registrationDate) {
         this.username = username;
+        this.password = password;
+        this.age = age;
+        this.registrationDate = registrationDate;
+    }
+
+    public User(String username, String email, String password, int age, LocalDate registrationDate) {
+        this.username = username;
+        this.email = email;
         this.password = password;
         this.age = age;
         this.registrationDate = registrationDate;
