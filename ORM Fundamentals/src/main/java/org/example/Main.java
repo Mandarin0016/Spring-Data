@@ -39,5 +39,7 @@ public class Main {
         for (User user : userEntityManager.find(User.class)) {
             System.out.printf("%s - %s ; ", user.getId(), user.getUsername());
         }
+        
+        connection.close();
     }
 }
