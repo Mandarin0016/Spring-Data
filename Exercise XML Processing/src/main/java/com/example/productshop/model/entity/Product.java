@@ -23,6 +23,7 @@ public class Product {
     private String name;
     private BigDecimal price;
     @ManyToOne
+    @JoinColumn(nullable = false)
     private User seller;
     @ManyToOne
     private User buyer;

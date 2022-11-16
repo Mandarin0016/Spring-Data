@@ -8,7 +8,10 @@ import com.example.productshop.util.ValidationUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -24,11 +27,25 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public void seedCollection(List<CategorySeedDTO> categories) {
-        categories
-                .stream()
-                .filter(validationUtil::isValid)
-                .map(c -> modelMapper.map(c, Category.class))
-                .forEach(categoryRepository::save);
+    public void seedDtoCollection(List<CategorySeedDTO> categories) {
+        if (categoryRepository.count() == 0) {
+            categories
+                    .stream()
+                    .filter(validationUtil::isValid)
+                    .map(c -> modelMapper.map(c, Category.class))
+                    .forEach(categoryRepository::save);
+        }
+    }
+
+    @Override
+    public Set<Category> getRandomSet() {
+        Set<Category> categories = new HashSet<>();
+        for (int i = 0; i < ThreadLocalRandom.current().nextInt(1, 3); i++) {
+            long randomId = ThreadLocalRandom
+                    .current()
+                    .nextLong(1, categoryRepository.count() + 1);
+            categories.add(categoryRepository.findById(randomId).orElse(null));
+        }
+        return categories;
     }
 }

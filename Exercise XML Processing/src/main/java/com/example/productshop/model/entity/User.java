@@ -21,12 +21,20 @@ public class User {
     private String firstName;
     private String lastName;
     private Integer age;
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_friends",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "friend_id", referencedColumnName = "id"))
     private Set<User> friends = new HashSet<>();
-    @OneToMany(mappedBy = "seller", targetEntity = Product.class)
-    private Set<Product> soldProducts = new HashSet<>();
+    @OneToMany(mappedBy = "seller", targetEntity = Product.class, fetch = FetchType.EAGER)
+    private Set<Product> soldProducts;
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("User{");
+        sb.append("id=").append(id);
+        sb.append('}');
+        return sb.toString();
+    }
 }
