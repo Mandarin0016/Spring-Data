@@ -15,4 +15,6 @@ public interface PictureService {
 
     Picture findByPath(String path);
 
+    boolean existByPath(String path);
+
 }

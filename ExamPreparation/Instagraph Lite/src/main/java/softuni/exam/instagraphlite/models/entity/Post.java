@@ -9,7 +9,7 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String caption;
-    @OneToOne
+    @ManyToOne
     @JoinColumn(nullable = false)
     private User user;
     @ManyToOne
@@ -46,5 +46,14 @@ public class Post {
 
     public void setPicture(Picture picture) {
         this.picture = picture;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("==Post Details:").append(System.lineSeparator());
+        sb.append(String.format("----Caption: %s", caption)).append(System.lineSeparator());
+        sb.append(String.format("----Picture Size: %s", picture.getSize())).append(System.lineSeparator());
+        return sb.toString();
     }
 }

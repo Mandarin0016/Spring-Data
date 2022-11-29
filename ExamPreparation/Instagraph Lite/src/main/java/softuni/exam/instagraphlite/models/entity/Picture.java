@@ -36,4 +36,11 @@ public class Picture {
     public void setSize(Double size) {
         this.size = size;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%.2f – %s", size, path)).append(System.lineSeparator());
+        return sb.toString().trim();
+    }
 }
